@@ -2,7 +2,7 @@
 * @Author: andrea
 * @Date:   2018-02-08 11:18:43
 * @Last Modified by:   Andrea Golin
-* @Last Modified time: 2018-02-09 16:56:02
+* @Last Modified time: 2018-02-09 17:38:23
  */
 
 package lockan
@@ -30,6 +30,8 @@ type Peer struct {
 
 type peer interface {
 	Init() int64
+	inputLoop(reader *bufio.Reader)
+	print()
 }
 
 func (p Peer) Init() int64 {
@@ -52,13 +54,16 @@ func (p Peer) Init() int64 {
 	}
 	fmt.Println("Listening to localhost " + sPort)
 
+	var tcpConn net.TCPConn
+	fmt.Println(tcpConn)
+
 	/**
 	 * Start side thread for:
 	 * 	printing
 	 * 	pooling stdin
 	 */
-	go print(p.printer)
-	go inputLoop(p.printer, reader, p.quit)
+	go p.print()
+	go p.inputLoop(reader)
 
 	defer l.Close()
 
@@ -83,7 +88,7 @@ func (p Peer) Init() int64 {
 		if err != nil {
 			panic(err)
 		}
-		go handleRequest(conn, p.printer)
+		go p.handleRequest(conn)
 	}
 
 	return 1
@@ -96,16 +101,18 @@ func (p Peer) Init() int64 {
  * @param  {[type]} quit    chan          bool          [description]
  * @return {[type]}         [description]
  */
-func inputLoop(printer chan string, reader *bufio.Reader, quit chan bool) {
+func (p Peer) inputLoop(reader *bufio.Reader) {
 	for {
 		fmt.Print("-> ")
 		text, _ := reader.ReadString('\n')
 		text = strings.Replace(text, "\n", "", -1)
 		if strings.Compare("ping", text) == 0 {
-			printer <- "pong"
+			p.printer <- "pong"
 		} else if strings.Compare("stop", text) == 0 {
-			printer <- "resquested Shutdown"
-			quit <- true
+			p.printer <- "resquested Shutdown"
+			p.quit <- true
+		} else {
+			p.printer <- "received input \n"
 		}
 	}
 }
@@ -115,9 +122,9 @@ func inputLoop(printer chan string, reader *bufio.Reader, quit chan bool) {
  * @param  {[type]} print chan          string [description]
  * @return {[type]}       [description]
  */
-func print(print chan string) {
+func (p Peer) print() {
 	for {
-		msg := <-print
+		msg := <-p.printer
 		fmt.Println(msg)
 	}
 }
@@ -128,7 +135,7 @@ func print(print chan string) {
  * @param  {[type]} printer chan          string        [description]
  * @return {[type]}         [description]
  */
-func handleRequest(conn net.Conn, printer chan string) {
+func (p Peer) handleRequest(conn net.Conn) {
 
 	buf := make([]byte, 1024)
 	_, err := conn.Read(buf)
@@ -136,7 +143,7 @@ func handleRequest(conn net.Conn, printer chan string) {
 		panic(err)
 	}
 
-	printer <- "Received connection"
+	p.printer <- "Received connection"
 
 	conn.Write([]byte("Message corectly received: \n"))
 	conn.Close()
