@@ -2,7 +2,7 @@
 * @Author: andrea
 * @Date:   2018-02-08 11:18:43
 * @Last Modified by:   Andrea Golin
-* @Last Modified time: 2018-02-09 17:38:23
+* @Last Modified time: 2018-02-09 17:53:24
  */
 
 package lockan
@@ -26,12 +26,14 @@ type Peer struct {
 	peers      map[string]Peer
 	quit       chan bool
 	printer    chan string
+	commands   map[int]*Command
 }
 
 type peer interface {
 	Init() int64
 	inputLoop(reader *bufio.Reader)
 	print()
+	listCommand() map[int]*Command
 }
 
 func (p Peer) Init() int64 {
@@ -155,6 +157,9 @@ func (p Peer) handleRequest(conn net.Conn) {
  */
 func Start(port *int) {
 	peers := make(map[string]Peer)
-	peer := &Peer{debug: true, maxpeers: 10, serverport: 678, serverhost: "localhost", peers: peers, port: *port}
+	scan := &Command{1, "Scan", "Scan"}
+	commands := make(map[int]*Command)
+	commands[1] = scan
+	peer := &Peer{debug: true, maxpeers: 10, serverport: 678, serverhost: "localhost", peers: peers, port: *port, commands: commands}
 	peer.Init()
 }
