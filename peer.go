@@ -2,7 +2,7 @@
 * @Author: andrea
 * @Date:   2018-02-08 11:18:43
 * @Last Modified by:   Andrea Golin
-* @Last Modified time: 2018-02-09 17:53:24
+* @Last Modified time: 2018-02-13 10:17:20
  */
 
 package lockan
@@ -33,7 +33,13 @@ type peer interface {
 	Init() int64
 	inputLoop(reader *bufio.Reader)
 	print()
-	listCommand() map[int]*Command
+	listCommands()
+}
+
+func (p Peer) listCommands() {
+	for _, value := range p.commands {
+		fmt.Println(value)
+	}
 }
 
 func (p Peer) Init() int64 {
@@ -108,11 +114,20 @@ func (p Peer) inputLoop(reader *bufio.Reader) {
 		fmt.Print("-> ")
 		text, _ := reader.ReadString('\n')
 		text = strings.Replace(text, "\n", "", -1)
+		textSlice := strings.Fields(text)
+		/*fmt.Printf("Fields are : %q", textSlice)
+		fmt.Printf("%q", textSlice[0])*/
 		if strings.Compare("ping", text) == 0 {
 			p.printer <- "pong"
 		} else if strings.Compare("stop", text) == 0 {
 			p.printer <- "resquested Shutdown"
 			p.quit <- true
+		} else if strings.Compare("commands-list", text) == 0 {
+			for _, value := range p.commands {
+				fmt.Printf("%d: %s \n", value.id, value.name)
+			}
+		} else if strings.Compare("lok", textSlice[0]) == 0 {
+			ParseCommands(textSlice[1:])
 		} else {
 			p.printer <- "received input \n"
 		}
