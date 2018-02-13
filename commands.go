@@ -7,7 +7,7 @@
 package lockan
 
 import (
-	"fmt"
+	"log"
 )
 
 type Command struct {
@@ -16,15 +16,45 @@ type Command struct {
 	function string
 }
 
-type iCommand interface {
-	Run()
-	Status()
-	Stop()
-	Parse()
+/**
+ * @brief      List of commands.
+ */
+type CommandList struct {
+	id          int
+	name        string
+	commands    map[int]*Command
+	status      int32
+	commandsDef map[int]string
 }
 
+/**
+ * @brief      { function_description }
+ *
+ * @return     { description_of_the_return_value }
+ */
+func InitCommandsList() {
+	commandsDef := make(map[int]string)
+
+	commandsDef[0] = "scan"
+	commandsDef[1] = "ping"
+	commandsDef[2] = "connect"
+	commandsDef[3] = "cut"
+
+	commands := make(map[int]*Command)
+	CommandList := &CommandList{id: 1, name: "Test", commands: commands, status: 1, commandsDef: commandsDef}
+
+	log.Printf("%s | %v", "Finished initializing commands list", CommandList)
+}
+
+/**
+ * @brief      { function_description }
+ *
+ * @param      values  The values
+ *
+ * @return     { description_of_the_return_value }
+ */
 func ParseCommands(values []string) {
 	for _, value := range values {
-		fmt.Printf("%q \n", value)
+		log.Printf("%s: %q \n", "Received command", value)
 	}
 }

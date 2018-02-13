@@ -10,6 +10,7 @@ package lockan
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"strconv"
@@ -38,11 +39,13 @@ type peer interface {
 
 func (p Peer) listCommands() {
 	for _, value := range p.commands {
-		fmt.Println(value)
+		log.Println(value)
 	}
 }
 
 func (p Peer) Init() int64 {
+
+	log.Printf("%s", "Starting...")
 
 	/**
 	 * Variable init
@@ -50,6 +53,7 @@ func (p Peer) Init() int64 {
 	p.quit = make(chan bool)
 	p.printer = make(chan string)
 	reader := bufio.NewReader(os.Stdin)
+	InitCommandsList()
 
 	/**
 	 * Start listening
@@ -60,10 +64,7 @@ func (p Peer) Init() int64 {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Listening to localhost " + sPort)
-
-	var tcpConn net.TCPConn
-	fmt.Println(tcpConn)
+	log.Println("Listening to localhost " + sPort)
 
 	/**
 	 * Start side thread for:
@@ -115,8 +116,10 @@ func (p Peer) inputLoop(reader *bufio.Reader) {
 		text, _ := reader.ReadString('\n')
 		text = strings.Replace(text, "\n", "", -1)
 		textSlice := strings.Fields(text)
-		/*fmt.Printf("Fields are : %q", textSlice)
-		fmt.Printf("%q", textSlice[0])*/
+
+		/**
+		 * TODO: to be rewritten with switch/case
+		 */
 		if strings.Compare("ping", text) == 0 {
 			p.printer <- "pong"
 		} else if strings.Compare("stop", text) == 0 {
@@ -124,7 +127,7 @@ func (p Peer) inputLoop(reader *bufio.Reader) {
 			p.quit <- true
 		} else if strings.Compare("commands-list", text) == 0 {
 			for _, value := range p.commands {
-				fmt.Printf("%d: %s \n", value.id, value.name)
+				log.Printf("%d: %s \n", value.id, value.name)
 			}
 		} else if strings.Compare("lok", textSlice[0]) == 0 {
 			ParseCommands(textSlice[1:])
@@ -142,7 +145,7 @@ func (p Peer) inputLoop(reader *bufio.Reader) {
 func (p Peer) print() {
 	for {
 		msg := <-p.printer
-		fmt.Println(msg)
+		log.Println(msg)
 	}
 }
 
@@ -168,7 +171,7 @@ func (p Peer) handleRequest(conn net.Conn) {
 }
 
 /**
- * [Start description]
+ * TODO: rewrite bootstrap logic
  */
 func Start(port *int) {
 	peers := make(map[string]Peer)
