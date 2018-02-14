@@ -2,13 +2,14 @@
 * @Author: andrea
 * @Date:   2018-02-08 11:18:43
 * @Last Modified by:   Andrea Golin
-* @Last Modified time: 2018-02-13 10:17:20
+* @Last Modified time: 2018-02-14 13:49:49
  */
 
 package lockan
 
 import (
 	"bufio"
+	//"encoding/binary"
 	"fmt"
 	"log"
 	"net"
@@ -119,6 +120,7 @@ func (p Peer) inputLoop(reader *bufio.Reader) {
 
 		/**
 		 * TODO: to be rewritten with switch/case
+		 * TODO: change commands input from stdin to TCP socket
 		 */
 		if strings.Compare("ping", text) == 0 {
 			p.printer <- "pong"
@@ -154,16 +156,47 @@ func (p Peer) print() {
  * @param  {[type]} conn    net.Conn      [description]
  * @param  {[type]} printer chan          string        [description]
  * @return {[type]}         [description]
+ *
+ * TODO: implement REAL netcode
  */
 func (p Peer) handleRequest(conn net.Conn) {
 
 	buf := make([]byte, 1024)
-	_, err := conn.Read(buf)
+
+	rD, err := conn.Read(buf)
 	if err != nil {
 		panic(err)
 	}
 
-	p.printer <- "Received connection"
+	/**
+	 * Logging to console for debug
+	 */
+	log.Printf("%s", "Received connection")
+	log.Printf("%s: %s", "Received payload (string version)", string(buf))
+	log.Printf("%s: %d", "Payload length", rD)
+
+	/**
+	 * Testing protocol
+	 * This should be parsed from conn Read
+	 */
+	pSize := [2]byte{255, 255}
+	pType := [1]byte{255}
+	pPayload := [32]byte{}
+	payload := "TERssdf sdf sfsdf ds"
+	copy(pPayload[:], []byte(payload))
+
+	log.Printf("%s: %T", "Payload type", pPayload)
+
+	/*log.Printf("%s: %b", "Binary payload as slice, prior to endian", dummySlice)
+	v := uint32(65854)
+	binary.BigEndian.PutUint32(pPayload[:], v)
+	log.Printf("%s: %b", "Payload after endian", pPayload)
+
+	po := binary.BigEndian.Uint32(pPayload[:])
+	log.Printf("%s: %d", "Tryng to decode payload", po)
+	*/
+	lP := &LockPacket{pSize: pSize, pType: pType, pPayload: pPayload}
+	lP.Dump()
 
 	conn.Write([]byte("Message corectly received: \n"))
 	conn.Close()
