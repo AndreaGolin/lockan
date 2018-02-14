@@ -2,7 +2,7 @@
 * @Author: andrea
 * @Date:   2018-02-08 11:18:43
 * @Last Modified by:   Andrea Golin
-* @Last Modified time: 2018-02-14 13:49:49
+* @Last Modified time: 2018-02-14 16:59:09
  */
 
 package lockan
@@ -10,6 +10,7 @@ package lockan
 import (
 	"bufio"
 	//"encoding/binary"
+	"bytes"
 	"fmt"
 	"log"
 	"net"
@@ -161,9 +162,9 @@ func (p Peer) print() {
  */
 func (p Peer) handleRequest(conn net.Conn) {
 
-	buf := make([]byte, 1024)
+	buf := make([]byte, 35)
 
-	rD, err := conn.Read(buf)
+	_, err := conn.Read(buf)
 	if err != nil {
 		panic(err)
 	}
@@ -172,39 +173,48 @@ func (p Peer) handleRequest(conn net.Conn) {
 	 * Logging to console for debug
 	 */
 	log.Printf("%s", "Received connection")
-	log.Printf("%s: %s", "Received payload (string version)", string(buf))
-	log.Printf("%s: %d", "Payload length", rD)
 
-	/**
-	 * Testing protocol
-	 * This should be parsed from conn Read
-	 */
-	pSize := [2]byte{255, 255}
-	pType := [1]byte{255}
-	pPayload := [32]byte{}
-	payload := "TERssdf sdf sfsdf ds"
-	copy(pPayload[:], []byte(payload))
-
-	log.Printf("%s: %T", "Payload type", pPayload)
-
-	/*log.Printf("%s: %b", "Binary payload as slice, prior to endian", dummySlice)
-	v := uint32(65854)
-	binary.BigEndian.PutUint32(pPayload[:], v)
-	log.Printf("%s: %b", "Payload after endian", pPayload)
-
-	po := binary.BigEndian.Uint32(pPayload[:])
-	log.Printf("%s: %d", "Tryng to decode payload", po)
-	*/
-	lP := &LockPacket{pSize: pSize, pType: pType, pPayload: pPayload}
-	lP.Dump()
+	ParseNetInput(buf)
 
 	conn.Write([]byte("Message corectly received: \n"))
 	conn.Close()
 
 }
 
+func DummySend() {
+	conn, err := net.Dial("tcp", "localhost:456")
+	if err != nil {
+		log.Printf("%s", err)
+	}
+
+	defer conn.Close()
+
+	fmt.Printf("%s", conn)
+
+	/*pSize    [2]byte
+	pType    [1]byte
+	pPayload [32]byte*/
+
+	var pSize [2]byte
+	var pType [1]byte
+
+	pSize[0] = 8
+	pSize[1] = 16
+	pType[0] = 2
+	dummyPayload := []byte("ASD")
+
+	log.Printf("%s: %T", "Dummy size type", pSize)
+	log.Printf("%s: %T", "Dummy type type", pType)
+
+	s := [][]byte{pSize[:], pType[:], dummyPayload}
+	fmt.Printf("%b", s)
+	cs := bytes.Join(s, []byte(""))
+	conn.Write(cs)
+}
+
 /**
  * TODO: rewrite bootstrap logic
+ * TODO: rewrite command logic
  */
 func Start(port *int) {
 	peers := make(map[string]Peer)

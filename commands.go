@@ -2,12 +2,13 @@
 * @Author: Andrea Golin
 * @Date:   2018-02-09 17:43:51
 * @Last Modified by:   Andrea Golin
-* @Last Modified time: 2018-02-14 11:13:16
+* @Last Modified time: 2018-02-14 16:44:33
  */
 package lockan
 
 import (
 	"log"
+	"strings"
 )
 
 type Command struct {
@@ -56,5 +57,8 @@ func InitCommandsList() {
 func ParseCommands(values []string) {
 	for _, value := range values {
 		log.Printf("%s: %q \n", "Received command", value)
+		if strings.Compare("ping", value) == 0 {
+			DummySend()
+		}
 	}
 }
