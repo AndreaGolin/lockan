@@ -181,15 +181,17 @@ func (p Peer) handleRequest(conn net.Conn) {
 
 }
 
-func DummySend() {
-	conn, err := net.Dial("tcp", "localhost:456")
+func DummySend(dstPort string) {
+
+	log.Printf("%s: %s", "Dest port:", dstPort)
+
+	conn, err := net.Dial("tcp", "localhost:"+dstPort)
 	if err != nil {
 		log.Printf("%s", err)
+		panic("Ping Error")
 	}
 
 	defer conn.Close()
-
-	fmt.Printf("%s", conn)
 
 	/*pSize    [2]byte
 	pType    [1]byte
@@ -210,6 +212,7 @@ func DummySend() {
 	fmt.Printf("%b", s)
 	cs := bytes.Join(s, []byte(""))
 	conn.Write(cs)
+
 }
 
 /**

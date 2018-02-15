@@ -55,10 +55,12 @@ func InitCommandsList() {
  * @return     { description_of_the_return_value }
  */
 func ParseCommands(values []string) {
-	for _, value := range values {
-		log.Printf("%s: %q \n", "Received command", value)
+	for i, value := range values {
+
 		if strings.Compare("ping", value) == 0 {
-			DummySend()
+
+			DummySend(values[i+1])
 		}
+
 	}
 }
